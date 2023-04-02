@@ -8,7 +8,7 @@ service:
 env:
   global:
     - USER="okpalaChidiebere"
-    - DOCKER_USERNAME_ENV="aluminetchidiebre"
+    - DOCKER_USERNAME="aluminetchidiebre"
     - SERVICE_NAME="chirper-app-tweet-service"
     - GOPRIVATE="github.com/${USER}"
 
@@ -34,5 +34,5 @@ deploy:
     echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin;
     docker buildx build --secret id=gitcredentials,src=~/.netrc -t "$SERVICE_NAME" --build-arg GOPRIVATE=$GOPRIVATE .;
     docker images;
-    docker tag "$SERVICE_NAME" "$DOCKER_USERNAME_ENV"/"$SERVICE_NAME":"$TRAVIS_BUILD_ID";
-    docker push "$DOCKER_USERNAME_ENV"/"$SERVICE_NAME";
+    docker tag "$SERVICE_NAME" "$DOCKER_USERNAME"/"$SERVICE_NAME":"$TRAVIS_BUILD_ID";
+    docker push "$DOCKER_USERNAME"/"$SERVICE_NAME";
