@@ -15,6 +15,9 @@ env:
 # Pre-testing installs
 before_install:
   - echo -e "machine github.com\n  login $CI_USER_TOKEN" > $HOME/.netrc # get user token from github here: https://github.com/settings/tokens/new
+  - mkdir -vp $HOME/.docker/cli-plugins/
+  - curl --silent -L "https://github.com/docker/buildx/releases/download/v0.3.0/buildx-v0.3.0.linux-amd64" > $HOME/.docker/cli-plugins/docker-buildx
+  - chmod a+x $HOME/.docker/cli-plugins/docker-buildx
   # - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.16.0
 
 install:
