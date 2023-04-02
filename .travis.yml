@@ -15,7 +15,7 @@ env:
 # Pre-testing installs
 before_install:
   - echo -e "machine github.com\n  login $CI_USER_TOKEN" > ~/.netrc # get user token from github here: https://github.com/settings/tokens/new
-  - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.37.1
+  - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.16.0
 
 install:
   - echo "nothing needs to be installed; skipping..."
