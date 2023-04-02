@@ -25,7 +25,7 @@ before_script:
   - echo "skipping before_script step..."
 
 script:
-  - golangci-lint run
+  - go mod download && golangci-lint run
   - go test -v -race ./...
 
 deploy:
