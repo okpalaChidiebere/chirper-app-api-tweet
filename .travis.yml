@@ -37,5 +37,6 @@ deploy:
     docker buildx build --secret id=gitcredentials,src=$HOME/.netrc -t "$SERVICE_NAME" --build-arg GOPRIVATE=$GOPRIVATE .;
     docker images;
     docker tag "$SERVICE_NAME" "$DOCKER_USERNAME"/"$SERVICE_NAME":"$TRAVIS_BUILD_ID";
+    docker images;
     echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin;
-    docker push "$DOCKER_USERNAME"/"$SERVICE_NAME";
+    docker push "$DOCKER_USERNAME"/"$SERVICE_NAME":"$TRAVIS_BUILD_ID";
