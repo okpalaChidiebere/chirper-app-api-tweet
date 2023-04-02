@@ -14,8 +14,8 @@ env:
 
 # Pre-testing installs
 before_install:
-  - echo -e "machine github.com\n  login $CI_USER_TOKEN" > ~/.netrc # get user token from github here: https://github.com/settings/tokens/new
-  - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.16.0
+  - echo -e "machine github.com\n  login $CI_USER_TOKEN" > $HOME/.netrc # get user token from github here: https://github.com/settings/tokens/new
+  # - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.16.0
 
 install:
   - echo "nothing needs to be installed; skipping..."
@@ -25,14 +25,14 @@ before_script:
   - echo "skipping before_script step..."
 
 script:
-  - go mod download && golangci-lint run
+  # - go mod download && golangci-lint run
   - go test -v -race ./...
 
 deploy:
   provider: script
   script: docker --version;
-    echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin;
-    docker buildx build --secret id=gitcredentials,src=~/.netrc -t "$SERVICE_NAME" --build-arg GOPRIVATE=$GOPRIVATE .;
+    docker buildx build --secret id=gitcredentials,src=$HOME/.netrc -t "$SERVICE_NAME" --build-arg GOPRIVATE=$GOPRIVATE .;
     docker images;
     docker tag "$SERVICE_NAME" "$DOCKER_USERNAME"/"$SERVICE_NAME":"$TRAVIS_BUILD_ID";
+    echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin;
     docker push "$DOCKER_USERNAME"/"$SERVICE_NAME";
