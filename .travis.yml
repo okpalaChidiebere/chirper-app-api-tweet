@@ -18,7 +18,7 @@ before_install:
   - mkdir -vp $HOME/.docker/cli-plugins/
   - curl --silent -L "https://github.com/docker/buildx/releases/download/v0.3.0/buildx-v0.3.0.linux-amd64" > $HOME/.docker/cli-plugins/docker-buildx
   - chmod a+x $HOME/.docker/cli-plugins/docker-buildx
-  # - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.16.0
+  - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.52.2 # documentation: https://golangci-lint.run/usage/quick-start/
 
 install:
   - echo "nothing needs to be installed; skipping..."
@@ -28,15 +28,13 @@ before_script:
   - echo "skipping before_script step..."
 
 script:
-  # - go mod download && golangci-lint run
+  - golangci-lint run ./... --disable-all -E errcheck #ignore 'errcheck' lints
   - go test -v -race ./...
 
 deploy:
   provider: script
   script: docker --version;
-    docker buildx build --secret id=gitcredentials,src=$HOME/.netrc -t "$SERVICE_NAME" --build-arg GOPRIVATE=$GOPRIVATE .;
-    docker images;
-    docker tag "$SERVICE_NAME" "$DOCKER_USERNAME"/"$SERVICE_NAME":"$TRAVIS_BUILD_ID";
-    docker images;
     echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin;
+    docker buildx build --secret id=gitcredentials,src=$HOME/.netrc -t "$DOCKER_USERNAME"/"$SERVICE_NAME":"$TRAVIS_BUILD_ID" --build-arg GOPRIVATE=$GOPRIVATE .;
+    docker images;
     docker push "$DOCKER_USERNAME"/"$SERVICE_NAME":"$TRAVIS_BUILD_ID";
