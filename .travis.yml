@@ -17,8 +17,8 @@ before_install:
   - echo -e "machine github.com\n  login $CI_USER_TOKEN" > $HOME/.netrc # get user token from github here: https://github.com/settings/tokens/new
   - mkdir -vp $HOME/.docker/cli-plugins/
   - curl --silent -L "https://github.com/docker/buildx/releases/download/v0.3.0/buildx-v0.3.0.linux-amd64" > $HOME/.docker/cli-plugins/docker-buildx
-  - chmod a+x $HOME/.docker/cli-plugins/docker-buildx
-  - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.52.2 # documentation: https://golangci-lint.run/usage/quick-start/
+  - chmod a+x $HOME/.docker/cli-plugins/docker-buildx # making sure docker-buildx has proper persmissions
+  - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.52.2
 
 install:
   - echo "nothing needs to be installed; skipping..."
@@ -28,7 +28,7 @@ before_script:
   - echo "skipping before_script step..."
 
 script:
-  - golangci-lint run --disable-all -E errcheck || travis_terminate 1 #ignore 'errcheck' lints
+  - golangci-lint run --disable errcheck || travis_terminate 1 #ignore 'errcheck' lints and stop the execution of Travis pipeline if script exits with an error
   - go test -v -race ./...
 
 deploy:
