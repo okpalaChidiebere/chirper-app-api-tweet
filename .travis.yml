@@ -5,6 +5,10 @@ go:
 service:
   - docker
 
+# Only clone the most recent commit
+git:
+  depth: 1
+
 env:
   global:
     - USER="okpalaChidiebere"
@@ -20,16 +24,22 @@ before_install:
   - chmod a+x $HOME/.docker/cli-plugins/docker-buildx # making sure docker-buildx has proper persmissions
   - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.52.2
 
+# Travis will automatically run `go get ${gobuild_args} ./..` that will download all the dependencies in your go.mod file in this step
+# see https://docs.travis-ci.com/user/languages/go/#dependency-management
 install:
-  - echo "nothing needs to be installed; skipping..."
+  - echo "no additional dependencies needs to be installed"
 
 # Scripts to be run such as tests
 before_script:
   - echo "skipping before_script step..."
 
+# For travis ci and go apps, it is important to run your run tests here. If you dont specify any script here or skip this field and run ur test in another phase, by default
+# travis will run the  `travis_script_go.bash` script
+# https://docs.travis-ci.com/user/languages/go/#default-build-script
+# https://github.com/travis-ci/travis-build/blob/master/lib/travis/build/bash/travis_script_go.bash
 script:
   - golangci-lint run --disable errcheck || travis_terminate 1 #ignore 'errcheck' lints and stop the execution of Travis pipeline if script exits with an error
-  - go test -v -race ./...
+  - go test -v -race ./... || travis_terminate 1
 
 deploy:
   provider: script

@@ -18,6 +18,7 @@ COPY . .
 
 # Our build container need access to secure file `.netrc` that contains our git credentials. So using the --mount flag we can provide this file without baking into the docker image; o we dont leak our secret
 # then build the application's binary. Mark the build as statically linked.
+# for the `--mount` flag to work be sure to enable Docker BuildKit by setting termianl env variable `DOCKER_BUILDKIT=1` see https://docs.docker.com/build/buildkit/#getting-started or having Docker buildx plugin installed
 # see: https://docs.docker.com/engine/reference/builder/#run---mounttypesecret
 RUN --mount=type=secret,id=gitcredentials,target=/root/.netrc \
   CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o main .

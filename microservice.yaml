@@ -1,0 +1,89 @@
+---
+# We define how we want our pod to be exposed
+apiVersion: v1
+kind: Service
+metadata:
+  name: chirper-app-tweet-service # the name should be thesame with the server host name inside one of your nginx upstream. otherwise your reverseproxy will crash because it cant reference this service to listen for
+  namespace: default
+spec:
+  selector:
+    app: chirper-app-api-tweet
+  ports:
+    - name: "6060"
+      port: 6060
+      targetPort: http
+      protocol: TCP
+    - name: "6061"
+      port: 6061
+      targetPort: grpc
+      protocol: TCP
+  type: ClusterIP # we don't want to expose this Pod to the outside world. We wanted to expose it to the outside world, we will use `type: LoadBalancer ClusterIP`
+---
+# we define how we want our pod to be deployed
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chirper-app-tweet-service-deployment # we give our pod a name so that we can reference it in pods list
+  namespace: default
+  labels:
+    app: chirper-app-api-tweet
+spec:
+  replicas: 1 # we have two pods to be created at start to handle horizontal scaling which we can configure later. Kubernetes will attempt to maintain the number of desired replicas. If a pod is terminated, it will automatically recreate the pod.
+  selector:
+    matchLabels:
+      app: chirper-app-api-tweet
+  template:
+    metadata:
+      labels:
+        app: chirper-app-api-tweet
+    spec:
+      containers: # we define the container where we want the docker image pulled from
+        - name: chirper-app-api-tweet
+          image: aluminetchidiebre/chirper-app-tweet-service:261979441 # this points to the dockerHub for my dockerImage that i want created in the pods. You must add the tag "latest" this way k*s will always pull the latest image version for you
+          imagePullPolicy: Always
+          livenessProbe: # We define this to tell kubernetes if our pod is working at expected in the "READY" state. What makes a pod healthy vs a pod having issues. This important for Self-healing. Self-Healing means that k8s will delete the pod and create a new one
+            httpGet:
+              path: /healthz # Here, we define an endpoint that an api consumer(like k8s) can reach to verify that my app is healthy. If this api return any other status code other than 200, k8s will mark it as unhealthy, terminate it and recreate a new one to maintain the desired number of replicas specified for this deployment
+              port: 6060
+            initialDelaySeconds: 10 # The k8s will run the first liveness probe 15 seconds after the container starts. If you make the value too small like 3 seconds your container might enter a crashLoop error because your container has not started running for the health endpoint to be able to be invoked
+            periodSeconds: 10 # k8s will continue to run this check every 10 seconds.
+            timeoutSeconds: 5
+          ports:
+            - name: http
+              containerPort: 6060
+            - name: grpc
+              containerPort: 6061
+          volumeMounts:
+            - name: aws-secret
+              mountPath: "/root/.aws/" #making our aws configured in you local environment. This will be the path our container will store our aws credentials just the way it is on our local machine
+              readOnly: true
+          resources: # we set the compute resources that our pod will be running on; limiting memory and cpu that this pod will use
+            requests:
+              memory: "64Mi"
+              cpu: "250m"
+            limits:
+              memory: "1024Mi"
+              cpu: "500m"
+          env: # we define environmental variables for this pod linking them to this env-config.yaml file we already applied to the cluster before now
+            - name: AWS_PROFILE
+              valueFrom:
+                configMapKeyRef:
+                  name: env-config
+                  key: AWS_PROFILE
+            - name: AWS_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: env-config
+                  key: AWS_REGION
+            - name: NODE_ENV
+              value: production
+      restartPolicy: Always
+      volumes:
+        - name: aws-secret
+          secret:
+            secretName: aws-secret
+      imagePullSecrets: # use to pull private images. See doc: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+        - name: reg-docker-cred # make sure you have this secrets registered in your k8s cluster
+
+# https://learnk8s.io/sidecar-containers-patterns
+# https://kubernetes-on-aws.readthedocs.io/en/latest/user-guide/example-credentials.html
