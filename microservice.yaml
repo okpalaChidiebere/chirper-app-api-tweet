@@ -75,8 +75,6 @@ spec:
                 configMapKeyRef:
                   name: env-config
                   key: AWS_REGION
-            - name: NODE_ENV
-              value: production
       restartPolicy: Always
       volumes:
         - name: aws-secret
